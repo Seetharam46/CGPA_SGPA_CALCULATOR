@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>SGPA & CGPA Calculator</title>
+  <meta name="theme-color" content="#1665d8"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="main-wrapper">
+    <header>
+      <h1 class="main-title">SGPA & CGPA Calculator</h1>
+      <div class="user-controls">
+        <select id="userSelect"></select>
+        <button id="addUserBtn" class="plain-btn">Add User</button>
+        <button id="deleteUserBtn" class="plain-btn">Delete User</button>
+      </div>
+    </header>
+
+    <!-- Username modal, reused for Add User and first launch -->
+    <div id="userEntryModal" class="entry-modal hidden">
+      <form class="entry-form" autocomplete="off">
+        <div class="icon">&#128100;</div>
+        <input type="text" id="entryUsername" maxlength="18" placeholder="Enter username" autofocus/>
+        <button id="entryContinueBtn" type="submit">Start</button>
+        <button id="entryCancelBtn" type="button" style="margin-left:1em;display:none;">Cancel</button>
+        <div id="entryError" class="entry-error"></div>
+      </form>
+    </div>
+
+    <main>
+      <div class="spacer-lg"></div>
+      <div class="panel-flex">
+        <div class="grid-panel">
+          <div class="sem-grid-title">Semesters</div>
+          <section class="sem-grid" id="semesters"></section>
+        </div>
+      </div>
+      <button id="installBtn" style="display:none;margin:1em auto;font-weight:600;font-size:.97em;padding:.58em 1.4em;border-radius:2em;background:#1665d8;color:#fff;border:none;cursor:pointer;">Install App</button>
+    </main>
+
+    <div id="modal" class="modal-overlay hidden">
+      <div class="modal">
+        <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
+        <h2 id="modalSemester"></h2>
+        <form id="subjectForm" autocomplete="off">
+          <label>
+            Number of Subjects:
+            <input type="number" id="subjectCount" min="1" max="15" value="9" autocomplete="off"/>
+          </label>
+          <div id="subjectRows"></div>
+          <button type="submit" class="modal-save">Save SGPA</button>
+        </form>
+        <div id="sgpaOutput"></div>
+      </div>
+    </div>
+
+    <footer class="cgpa-banner">
+      <span>CGPA:</span>
+      <span id="cgpaValue">--</span>
+    </footer>
+    <div id="toast"></div>
+  </div>
+  <script src="script.js"></script>
+  <script>
+    // Service Worker for PWA
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+
+    // PWA install button logic
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installBtn').style.display = "block";
+    });
+    document.getElementById('installBtn').onclick = function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+      }
+      this.style.display = "none";
+    };
+  </script>
+</body>
+</html>
