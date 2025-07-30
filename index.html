@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>SGPA & CGPA Calculator</title>
+  <title>Marksly – SGPA & CGPA Calculator</title>
   <meta name="theme-color" content="#1665d8"/>
   <link rel="manifest" href="manifest.json"/>
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
@@ -12,7 +12,10 @@
 <body>
   <div class="main-wrapper">
     <header>
-      <h1 class="main-title">SGPA & CGPA Calculator</h1>
+      <h1 class="main-title">Marksly</h1>
+      <div class="subtitle" style="text-align:center;color:#1976d2;font-size:1em;margin-bottom:0.8em;">
+        Smart SGPA & CGPA Calculator
+      </div>
       <div class="user-controls">
         <select id="userSelect"></select>
         <button id="addUserBtn" class="plain-btn">Add User</button>
@@ -68,9 +71,7 @@
     <div id="modal" class="modal-overlay hidden">
       <div class="modal">
         <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
-        <h2 id="modalSemester">
-          <span id="modalSemLabel"></span> <span id="modalSemDot"></span>
-        </h2>
+        <h2 id="modalSemester"><span id="modalSemLabel"></span></h2>
         <form id="subjectForm" autocomplete="off">
           <label>
             Number of Subjects:
