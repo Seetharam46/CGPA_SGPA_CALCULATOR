@@ -4,12 +4,62 @@ const GRADES = [
   { label: 'B', value: 8 }, { label: 'C', value: 7 },
   { label: 'D', value: 6 }, { label: 'E', value: 5 }, { label: 'F', value: 0 }
 ];
-// Only 1, 1.5, 2, 3
 const CREDIT_OPTIONS = [1, 1.5, 2, 3];
 
 let state = { users: [], user: null, data: {} };
+let currentOpenSemIdx = null;
 
-// --- User Management ---
+// User modal logic (Add User, Confirm Delete)
+function showAddUserModal() {
+  const modal = document.getElementById('userModal');
+  const title = document.getElementById('userModalTitle');
+  const input = document.getElementById('userModalInput');
+  const error = document.getElementById('userModalError');
+  title.textContent = 'Add New User';
+  input.value = '';
+  error.textContent = '';
+  modal.classList.remove('hidden');
+  modal.querySelector('.modal').classList.add('modal-user-anim');
+  setTimeout(()=>input.focus(),20);
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    modal.querySelector('.modal').classList.remove('modal-user-anim');
+  }
+  document.getElementById('closeUserModal').onclick =
+    document.getElementById('userModalCancel').onclick = (e) => { e.preventDefault(); closeModal(); }
+    
+  document.getElementById('userModalForm').onsubmit = function(e) {
+    e.preventDefault();
+    let val = input.value.trim();
+    if (!val) { error.textContent = "Please enter a username."; input.focus(); return;}
+    if (val.length > 18) { error.textContent = "Username must be at most 18 characters."; input.focus(); return;}
+    if (state.users.includes(val)) { error.textContent = "Username already exists."; input.focus(); return;}
+    state.users.push(val);
+    state.data[val] = {};
+    state.user = val;
+    saveState();
+    closeModal();
+    renderUserDropdown();
+    renderSemesters();
+    renderCgpa();
+    showToast("User Added!");
+  };
+}
+function showDeleteUserModal() {
+  const modal = document.getElementById('confirmModal');
+  const txt = document.getElementById('deleteConfirmText');
+  txt.textContent = `Delete user "${state.user}"? This cannot be undone.`;
+  modal.classList.remove('hidden');
+  document.getElementById('confirmYes').onclick = function() {
+    deleteUser(true);
+    modal.classList.add('hidden');
+  };
+  document.getElementById('confirmCancel').onclick = function() {
+    modal.classList.add('hidden');
+  };
+}
+// Existing "promptForFirstUser" for startup (can look like user modal)
 function promptForFirstUser() {
   const modal = document.getElementById('userEntryModal');
   const form = modal.querySelector('form');
@@ -71,21 +121,8 @@ function renderUserDropdown() {
   });
   sel.value = state.user || '';
 }
-function newUser() {
-  const username = prompt("Enter new username:");
-  if (!username || state.users.includes(username)) return;
-  state.users.push(username);
-  state.data[username] = {};
-  state.user = username;
-  saveState();
-  renderUserDropdown();
-  renderSemesters();
-  renderCgpa();
-  showToast("User Added!");
-}
-function deleteUser() {
+function deleteUser(isModal) {
   if (!state.user) return;
-  if (!confirm(`Delete user "${state.user}"? This cannot be undone.`)) return;
   state.users.splice(state.users.indexOf(state.user), 1);
   delete state.data[state.user];
   state.user = state.users[0] || null;
@@ -103,7 +140,6 @@ function switchUser(e) {
   showToast("Switched to " + state.user);
 }
 
-// --- Semesters UI ---
 function renderSemesters() {
   const container = document.getElementById('semesters');
   container.innerHTML = '';
@@ -112,6 +148,7 @@ function renderSemesters() {
     renderCgpa();
     return;
   }
+  const userData = state.data[state.user] || {};
   SEMESTERS.forEach((sem, idx) => {
     const card = document.createElement('div');
     card.className = 'semCard';
@@ -124,16 +161,35 @@ function renderSemesters() {
 }
 
 function openSemester(idx) {
+  currentOpenSemIdx = idx;
   const modal = document.getElementById('modal');
   modal.classList.remove('hidden');
-  document.getElementById('modalSemester').textContent = `Semester ${SEMESTERS[idx]}`;
+  document.getElementById('modalSemLabel').textContent = `Semester ${SEMESTERS[idx]}`;
   const semKey = "S" + (idx + 1);
   const userData = state.data[state.user] || {};
+  const isSaved = !!(userData[semKey] && userData[semKey].sgpa && userData[semKey].totalCredits);
+  document.getElementById('modalSemDot').innerHTML = `<span 
+    class="sem-indicator-mini ${isSaved ? 'saved' : 'unsaved'}"
+    title="${isSaved ? 'Saved' : 'Not Saved'}"
+    aria-label="${isSaved ? 'Semester saved' : 'Semester not saved'}"
+  ></span>`;
   const semData = userData[semKey] || { subjects: [] };
   const countInput = document.getElementById('subjectCount');
   countInput.value = semData.subjects.length || 9;
   renderSubjectRows(semData.subjects);
   updateSgpaOutputDisplay(semData);
+
+  // Remove Semester button
+  const removeBtn = document.getElementById('removeSemBtn');
+  if (isSaved) {
+    removeBtn.style.display = "";
+  } else {
+    removeBtn.style.display = "none";
+  }
+  removeBtn.onclick = function() {
+    removeSemester(idx);
+    modal.classList.add('hidden');
+  };
 
   countInput.oninput = () => {
     renderSubjectRows();
@@ -146,7 +202,6 @@ function openSemester(idx) {
     modal.classList.add('hidden');
   };
 }
-
 function closeModal() {
   document.getElementById('modal').classList.add('hidden');
 }
@@ -155,13 +210,11 @@ document.getElementById('modal').onclick = e => {
   if (e.target.classList.contains('modal-overlay')) closeModal();
 };
 
-// --- Creating Subject Rows ---
 function renderSubjectRows(existing = []) {
   const count = Math.max(1, Math.min(15, parseInt(document.getElementById('subjectCount').value, 10) || 9));
   const container = document.getElementById('subjectRows');
   container.innerHTML = '';
   for (let i = 0; i < count; i++) {
-    // Default: grade is A+ (10) unless already set
     const gradeSelected = (existing[i] && typeof existing[i].grade !== 'undefined' && existing[i].grade !== '') ? existing[i].grade : 10;
     const creditSelected = (existing[i] && typeof existing[i].credit !== 'undefined') ? existing[i].credit : 3;
     const row = document.createElement('div');
@@ -213,10 +266,19 @@ function saveSemester(idx) {
   state.data[state.user][semKey] = { subjects, sgpa, totalCredits };
   saveState();
   renderCgpa();
+  renderSemesters();
   showToast("SGPA saved!");
 }
-
-// --- SGPA Preview in Modal ---
+function removeSemester(idx) {
+  const semKey = "S" + (idx + 1);
+  if (state.data[state.user] && state.data[state.user][semKey]) {
+    delete state.data[state.user][semKey];
+    saveState();
+    renderCgpa();
+    renderSemesters();
+    showToast("Semester removed!");
+  }
+}
 function updateSgpaOutputDisplay(existingData) {
   const sgpaDiv = document.getElementById('sgpaOutput');
   let subjects = [];
@@ -231,8 +293,6 @@ function updateSgpaOutputDisplay(existingData) {
   const sgpa = totalCredits ? (valSubs.reduce((sum, sub) => sum + sub.grade * sub.credit, 0) / totalCredits) : null;
   sgpaDiv.textContent = (sgpa != null && !isNaN(sgpa)) ? 'SGPA: ' + sgpa.toFixed(2) : '';
 }
-
-// --- CGPA Footer Banner + Percentage ---
 function renderCgpa() {
   const cgpaBar = document.getElementById('cgpaValue');
   const percentBar = document.getElementById('percentageValue');
@@ -253,7 +313,7 @@ function renderCgpa() {
   }
   if (denominator) {
     const cgpa = numerator/denominator;
-    const percent = cgpa * 9.5;
+    const percent = (cgpa - 0.75) * 10;
     cgpaBar.textContent = cgpa.toFixed(2);
     percentBar.textContent = `Percentage: ${percent.toFixed(2)}%`;
   } else {
@@ -262,8 +322,8 @@ function renderCgpa() {
   }
 }
 
-document.getElementById('addUserBtn').onclick = newUser;
-document.getElementById('deleteUserBtn').onclick = deleteUser;
+document.getElementById('addUserBtn').onclick = showAddUserModal;
+document.getElementById('deleteUserBtn').onclick = showDeleteUserModal;
 document.getElementById('userSelect').onchange = switchUser;
 
 loadState();
@@ -273,4 +333,4 @@ if (!state.users.length) {
   renderUserDropdown();
   renderSemesters();
   renderCgpa();
-}
+                   }
