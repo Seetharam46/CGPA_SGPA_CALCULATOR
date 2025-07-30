@@ -4,9 +4,12 @@ const GRADES = [
   { label: 'B', value: 8 }, { label: 'C', value: 7 },
   { label: 'D', value: 6 }, { label: 'E', value: 5 }, { label: 'F', value: 0 }
 ];
-const CREDIT_OPTIONS = [3, 2, 1.5];
+// Only 1, 1.5, 2, 3
+const CREDIT_OPTIONS = [1, 1.5, 2, 3];
+
 let state = { users: [], user: null, data: {} };
 
+// --- User Management ---
 function promptForFirstUser() {
   const modal = document.getElementById('userEntryModal');
   const form = modal.querySelector('form');
@@ -100,12 +103,12 @@ function switchUser(e) {
   showToast("Switched to " + state.user);
 }
 
+// --- Semesters UI ---
 function renderSemesters() {
   const container = document.getElementById('semesters');
   container.innerHTML = '';
   if (!state.user) {
-    container.innerHTML =
-      '<div style="grid-column:1/-1; padding:2em 0; text-align:center; color:#888;">Please add a user!</div>';
+    container.innerHTML = '<div style="grid-column:1/-1; padding:2em 0; text-align:center; color:#888;">Please add a user!</div>';
     renderCgpa();
     return;
   }
@@ -152,6 +155,7 @@ document.getElementById('modal').onclick = e => {
   if (e.target.classList.contains('modal-overlay')) closeModal();
 };
 
+// --- Creating Subject Rows ---
 function renderSubjectRows(existing = []) {
   const count = Math.max(1, Math.min(15, parseInt(document.getElementById('subjectCount').value, 10) || 9));
   const container = document.getElementById('subjectRows');
@@ -211,6 +215,8 @@ function saveSemester(idx) {
   renderCgpa();
   showToast("SGPA saved!");
 }
+
+// --- SGPA Preview in Modal ---
 function updateSgpaOutputDisplay(existingData) {
   const sgpaDiv = document.getElementById('sgpaOutput');
   let subjects = [];
@@ -225,9 +231,16 @@ function updateSgpaOutputDisplay(existingData) {
   const sgpa = totalCredits ? (valSubs.reduce((sum, sub) => sum + sub.grade * sub.credit, 0) / totalCredits) : null;
   sgpaDiv.textContent = (sgpa != null && !isNaN(sgpa)) ? 'SGPA: ' + sgpa.toFixed(2) : '';
 }
+
+// --- CGPA Footer Banner + Percentage ---
 function renderCgpa() {
   const cgpaBar = document.getElementById('cgpaValue');
-  if (!state.user) { cgpaBar.textContent = '--'; return;}
+  const percentBar = document.getElementById('percentageValue');
+  if (!state.user) {
+    cgpaBar.textContent = '--';
+    percentBar.textContent = 'Percentage: --';
+    return;
+  }
   const userData = state.data[state.user] || {};
   let numerator = 0, denominator = 0;
   for(let i=1; i<=8; i++) {
@@ -238,7 +251,15 @@ function renderCgpa() {
       denominator += sem.totalCredits;
     }
   }
-  cgpaBar.textContent = denominator ? (numerator/denominator).toFixed(2) : '--';
+  if (denominator) {
+    const cgpa = numerator/denominator;
+    const percent = cgpa * 9.5;
+    cgpaBar.textContent = cgpa.toFixed(2);
+    percentBar.textContent = `Percentage: ${percent.toFixed(2)}%`;
+  } else {
+    cgpaBar.textContent = '--';
+    percentBar.textContent = 'Percentage: --';
+  }
 }
 
 document.getElementById('addUserBtn').onclick = newUser;
