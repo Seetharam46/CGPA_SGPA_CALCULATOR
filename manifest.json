@@ -1,11 +1,11 @@
 {
-  "name": "SGPA App",
-  "short_name": "SGPA",
+  "name": "Marksly",
+  "short_name": "Marksly",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1665d8",
-  "description": "A simple SGPA & CGPA Calculator",
+  "description": "Marksly – A smart SGPA & CGPA Calculator for students",
   "icons": [
     {
       "src": "icon-192.png",
