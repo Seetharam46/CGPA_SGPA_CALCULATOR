@@ -19,8 +19,33 @@
         <button id="deleteUserBtn" class="plain-btn">Delete User</button>
       </div>
     </header>
-
-    <!-- Username modal, reused for Add User and first launch -->
+    <!-- Add User Modal -->
+    <div id="userModal" class="modal-overlay hidden">
+      <div class="modal user-modal">
+        <button class="close-btn" id="closeUserModal" aria-label="Close">&times;</button>
+        <h2 id="userModalTitle"></h2>
+        <form id="userModalForm" autocomplete="off">
+          <input type="text" id="userModalInput" maxlength="18" placeholder="Enter username" autocomplete="off"/>
+          <div class="entry-error" id="userModalError"></div>
+          <div style="margin-top:1.2em;">
+            <button type="submit" class="modal-save" id="userModalOK">OK</button>
+            <button type="button" id="userModalCancel" class="plain-btn" style="margin-left:1em;">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Delete Confirm Modal -->
+    <div id="confirmModal" class="modal-overlay hidden">
+      <div class="modal confirm-modal">
+        <h2>Delete User?</h2>
+        <p id="deleteConfirmText"></p>
+        <div style="margin-top:.6em;">
+          <button id="confirmYes" class="modal-save" style="margin-right:.75em;">Yes, Delete</button>
+          <button id="confirmCancel" class="plain-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- First-time username modal reused for onboarding -->
     <div id="userEntryModal" class="entry-modal hidden">
       <form class="entry-form" autocomplete="off">
         <div class="icon">&#128100;</div>
@@ -30,7 +55,6 @@
         <div id="entryError" class="entry-error"></div>
       </form>
     </div>
-
     <main>
       <div class="spacer-lg"></div>
       <div class="panel-flex">
@@ -41,11 +65,12 @@
       </div>
       <button id="installBtn" style="display:none;margin:1em auto;font-weight:600;font-size:.97em;padding:.58em 1.4em;border-radius:2em;background:#1665d8;color:#fff;border:none;cursor:pointer;">Install App</button>
     </main>
-
     <div id="modal" class="modal-overlay hidden">
       <div class="modal">
         <button id="closeModal" class="close-btn" aria-label="Close">&times;</button>
-        <h2 id="modalSemester"></h2>
+        <h2 id="modalSemester">
+          <span id="modalSemLabel"></span> <span id="modalSemDot"></span>
+        </h2>
         <form id="subjectForm" autocomplete="off">
           <label>
             Number of Subjects:
@@ -53,11 +78,11 @@
           </label>
           <div id="subjectRows"></div>
           <button type="submit" class="modal-save">Save SGPA</button>
+          <button id="removeSemBtn" type="button" style="display:none;margin-left:1em;">Remove Semester</button>
         </form>
         <div id="sgpaOutput"></div>
       </div>
     </div>
-
     <footer class="cgpa-banner">
       <span>CGPA:</span>
       <span id="cgpaValue">--</span>
@@ -67,10 +92,7 @@
   </div>
   <script src="script.js"></script>
   <script>
-    // Service Worker for PWA
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-
-    // PWA install button logic
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
