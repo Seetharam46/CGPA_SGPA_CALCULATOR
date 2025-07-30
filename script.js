@@ -28,7 +28,7 @@ function showAddUserModal() {
   }
   document.getElementById('closeUserModal').onclick =
     document.getElementById('userModalCancel').onclick = (e) => { e.preventDefault(); closeModal(); }
-    
+
   document.getElementById('userModalForm').onsubmit = function(e) {
     e.preventDefault();
     let val = input.value.trim();
@@ -148,7 +148,6 @@ function renderSemesters() {
     renderCgpa();
     return;
   }
-  const userData = state.data[state.user] || {};
   SEMESTERS.forEach((sem, idx) => {
     const card = document.createElement('div');
     card.className = 'semCard';
@@ -168,11 +167,6 @@ function openSemester(idx) {
   const semKey = "S" + (idx + 1);
   const userData = state.data[state.user] || {};
   const isSaved = !!(userData[semKey] && userData[semKey].sgpa && userData[semKey].totalCredits);
-  document.getElementById('modalSemDot').innerHTML = `<span 
-    class="sem-indicator-mini ${isSaved ? 'saved' : 'unsaved'}"
-    title="${isSaved ? 'Saved' : 'Not Saved'}"
-    aria-label="${isSaved ? 'Semester saved' : 'Semester not saved'}"
-  ></span>`;
   const semData = userData[semKey] || { subjects: [] };
   const countInput = document.getElementById('subjectCount');
   countInput.value = semData.subjects.length || 9;
@@ -333,4 +327,4 @@ if (!state.users.length) {
   renderUserDropdown();
   renderSemesters();
   renderCgpa();
-                   }
+}
